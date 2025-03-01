@@ -1,0 +1,868 @@
+{
+  "description": "Flow into the Future of Language.",
+  "icon": null,
+  "name": "slacker",
+  "endpoint_name": null,
+  "locked": false,
+  "id": "4d197186-438f-438d-bc5c-dfd7e37ad6c7",
+  "tags": null,
+  "gradient": null,
+  "user_id": "ebde8232-2604-4a3a-a82e-51ece7801b76",
+  "folder_id": "97d09dfd-e730-4f20-bc46-3417147a87fb",
+  "icon_bg_color": null,
+  "is_component": false,
+  "data": {
+    "nodes": [
+      {
+        "id": "CustomComponent-Vilnz",
+        "type": "genericNode",
+        "position": {
+          "x": 5.0539403425562455,
+          "y": 39.061565549446044
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "import json\nimport base64\nimport os\nimport requests\nfrom openai import OpenAI\nfrom langflow.custom import Component\nfrom langflow.io import MessageTextInput, Output\nfrom langflow.schema import Data\n\ndef image_to_base64(image_path):\n    \"\"\"\n    Convert an image file or URL to a base64-encoded string.\n    \"\"\"\n    if image_path.startswith(\"http://\") or image_path.startswith(\"https://\"):\n        response = requests.get(image_path)\n        if response.status_code == 200:\n            return base64.b64encode(response.content).decode('utf-8')\n        else:\n            raise Exception(f\"Failed to download image. Status code: {response.status_code}\")\n    else:\n        # Treat as a local file path\n        with open(image_path, \"rb\") as image_file:\n            return base64.b64encode(image_file.read()).decode('utf-8')\n\ndef analyze_image(image_path):\n    \"\"\"\n    Analyze an image (by URL or local path) and return a valid Excalidraw JSON schema.\n    \"\"\"\n    base64_image = image_to_base64(image_path)\n    image_data_url = f\"data:image/jpeg;base64,{base64_image}\"\n    \n    API_KEY = os.getenv(\"OPENAI_API_KEY\")\n    if not API_KEY:\n        raise ValueError(\"Missing OpenAI API Key! Set OPENAI_API_KEY as an environment variable.\")\n    \n    client = OpenAI(api_key=API_KEY)\n\n    try:\n        api_response = client.chat.completions.create(\n            model=\"gpt-4-turbo\",\n            response_format={\"type\": \"json_object\"},\n            messages=[\n                {\n                    \"role\": \"system\",\n                    \"content\": (\n                        \"You are an expert converter from image to Excalidraw JSON. \"\n                  \n                    )\n                },\n                {\n                    \"role\": \"user\",\n                    \"content\": f\"Problem: I have an image of a diagram and I want to parse it into an exact excalibar JSON structure.Let's think step by step. Analyze this image, the shapes, different lines and everything. Understand the concept behind the image, the purpose for it.Create excalibar JSON structure for this image. Make sure the output is only JSON structure, without any intermediate output 'Here is the json' and similar things.\\n{image_data_url}\"\n                }\n            ],\n            max_tokens=2000\n        )\n        \n        raw_response = api_response.choices[0].message.content if api_response.choices else None\n        \n        if not raw_response:\n            return {\"error\": \"OpenAI returned an empty response.\"}\n\n        print(\"Raw API Response:\", raw_response)\n        \n        parsed_json = json.loads(raw_response)\n        return parsed_json\n\n    except Exception as e:\n        print(f\"Error during OpenAI API call: {e}\")\n        return {\"error\": str(e)}\n\nclass CustomComponent(Component):\n    display_name = \"Get Image Description & Excalidraw JSON\"\n    description = \"Analyzes an image URL and outputs an Excalidraw JSON schema.\"\n    documentation: str = \"https://docs.langflow.org/components-custom-components\"\n    icon = \"code\"\n    name = \"CustomComponent\"\n\n    inputs = [\n        MessageTextInput(\n            name=\"input_value\",\n            display_name=\"Image URL or Path\",\n            info=\"Enter the URL (or local path) of the image to analyze\",\n            value=\"https://pub-75e3228cc29c4246a885bc1eefac7c19.r2.dev/simple.png\",\n            tool_mode=True,\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Output\", name=\"output\", method=\"build_output\"),\n    ]\n\n    def build_output(self) -> Data:\n        try:\n            result = analyze_image(self.input_value)\n            data = Data(value=result)\n        except Exception as e:\n            data = Data(value={\"error\": str(e)})\n        self.status = data\n        return data\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "tool_mode": true,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "https://pub-75e3228cc29c4246a885bc1eefac7c19.r2.dev/basic.png",
+                "display_name": "Image URL or Path",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Enter the URL (or local path) of the image to analyze",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Analyzes an image URL and outputs an Excalidraw JSON schema.",
+            "icon": "code",
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Get Image Description & Excalidraw JSON",
+            "documentation": "https://docs.langflow.org/components-custom-components",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "output",
+                "hidden": null,
+                "display_name": "Output",
+                "method": "build_output",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": null,
+                "allows_loop": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [
+              "input_value"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": true,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.2.0"
+          },
+          "showNode": true,
+          "type": "CustomComponent",
+          "id": "CustomComponent-Vilnz"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 248
+        },
+        "dragging": false
+      },
+      {
+        "id": "APIRequest-7yNM1",
+        "type": "genericNode",
+        "position": {
+          "x": -409.44050327551884,
+          "y": 30.25838557126638
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "query_params": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "query_params",
+                "value": {},
+                "display_name": "Query Parameters",
+                "advanced": true,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "The query parameters to append to the URL.",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "body": {
+                "tool_mode": false,
+                "is_list": true,
+                "list_add_label": "Add More",
+                "table_schema": {
+                  "columns": [
+                    {
+                      "name": "key",
+                      "display_name": "Key",
+                      "sortable": true,
+                      "filterable": true,
+                      "formatter": "text",
+                      "type": "str",
+                      "description": "Parameter name",
+                      "default": "None",
+                      "disable_edit": false,
+                      "edit_mode": "popover",
+                      "hidden": false
+                    },
+                    {
+                      "name": "value",
+                      "display_name": "Value",
+                      "sortable": true,
+                      "filterable": true,
+                      "description": "Parameter value",
+                      "default": "None",
+                      "disable_edit": false,
+                      "edit_mode": "popover",
+                      "hidden": false,
+                      "formatter": "text"
+                    }
+                  ]
+                },
+                "trigger_text": "Open table",
+                "trigger_icon": "Table",
+                "table_icon": "Table",
+                "trace_as_metadata": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "body",
+                "value": [],
+                "display_name": "Body",
+                "advanced": true,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "The body to send with the request as a dictionary (for POST, PATCH, PUT).",
+                "title_case": false,
+                "type": "table",
+                "_input_type": "TableInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "import asyncio\nimport json\nimport re\nimport tempfile\nfrom datetime import datetime, timezone\nfrom pathlib import Path\nfrom typing import Any\nfrom urllib.parse import parse_qsl, urlencode, urlparse, urlunparse\n\nimport aiofiles\nimport aiofiles.os as aiofiles_os\nimport httpx\nimport validators\n\nfrom langflow.base.curl.parse import parse_context\nfrom langflow.custom import Component\nfrom langflow.io import (\n    BoolInput,\n    DataInput,\n    DropdownInput,\n    FloatInput,\n    IntInput,\n    MessageTextInput,\n    MultilineInput,\n    Output,\n    StrInput,\n    TableInput,\n)\nfrom langflow.schema import Data\nfrom langflow.schema.dotdict import dotdict\n\n\nclass APIRequestComponent(Component):\n    display_name = \"API Request\"\n    description = \"Make HTTP requests using URLs or cURL commands.\"\n    icon = \"Globe\"\n    name = \"APIRequest\"\n\n    default_keys = [\"urls\", \"method\", \"query_params\"]\n\n    inputs = [\n        MessageTextInput(\n            name=\"urls\",\n            display_name=\"URLs\",\n            list=True,\n            info=\"Enter one or more URLs, separated by commas.\",\n            advanced=False,\n            tool_mode=True,\n        ),\n        MultilineInput(\n            name=\"curl\",\n            display_name=\"cURL\",\n            info=(\n                \"Paste a curl command to populate the fields. \"\n                \"This will fill in the dictionary fields for headers and body.\"\n            ),\n            advanced=True,\n            real_time_refresh=True,\n            tool_mode=True,\n        ),\n        DropdownInput(\n            name=\"method\",\n            display_name=\"Method\",\n            options=[\"GET\", \"POST\", \"PATCH\", \"PUT\", \"DELETE\"],\n            info=\"The HTTP method to use.\",\n            real_time_refresh=True,\n        ),\n        BoolInput(\n            name=\"use_curl\",\n            display_name=\"Use cURL\",\n            value=False,\n            info=\"Enable cURL mode to populate fields from a cURL command.\",\n            real_time_refresh=True,\n        ),\n        DataInput(\n            name=\"query_params\",\n            display_name=\"Query Parameters\",\n            info=\"The query parameters to append to the URL.\",\n            advanced=True,\n        ),\n        TableInput(\n            name=\"body\",\n            display_name=\"Body\",\n            info=\"The body to send with the request as a dictionary (for POST, PATCH, PUT).\",\n            table_schema=[\n                {\n                    \"name\": \"key\",\n                    \"display_name\": \"Key\",\n                    \"type\": \"str\",\n                    \"description\": \"Parameter name\",\n                },\n                {\n                    \"name\": \"value\",\n                    \"display_name\": \"Value\",\n                    \"description\": \"Parameter value\",\n                },\n            ],\n            value=[],\n            input_types=[\"Data\"],\n            advanced=True,\n        ),\n        TableInput(\n            name=\"headers\",\n            display_name=\"Headers\",\n            info=\"The headers to send with the request as a dictionary.\",\n            table_schema=[\n                {\n                    \"name\": \"key\",\n                    \"display_name\": \"Header\",\n                    \"type\": \"str\",\n                    \"description\": \"Header name\",\n                },\n                {\n                    \"name\": \"value\",\n                    \"display_name\": \"Value\",\n                    \"type\": \"str\",\n                    \"description\": \"Header value\",\n                },\n            ],\n            value=[],\n            advanced=True,\n            input_types=[\"Data\"],\n        ),\n        IntInput(\n            name=\"timeout\",\n            display_name=\"Timeout\",\n            value=5,\n            info=\"The timeout to use for the request.\",\n            advanced=True,\n        ),\n        BoolInput(\n            name=\"follow_redirects\",\n            display_name=\"Follow Redirects\",\n            value=True,\n            info=\"Whether to follow http redirects.\",\n            advanced=True,\n        ),\n        BoolInput(\n            name=\"save_to_file\",\n            display_name=\"Save to File\",\n            value=False,\n            info=\"Save the API response to a temporary file\",\n            advanced=True,\n        ),\n        BoolInput(\n            name=\"include_httpx_metadata\",\n            display_name=\"Include HTTPx Metadata\",\n            value=False,\n            info=(\n                \"Include properties such as headers, status_code, response_headers, \"\n                \"and redirection_history in the output.\"\n            ),\n            advanced=True,\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Data\", name=\"data\", method=\"make_requests\"),\n    ]\n\n    def _parse_json_value(self, value: Any) -> Any:\n        \"\"\"Parse a value that might be a JSON string.\"\"\"\n        if not isinstance(value, str):\n            return value\n\n        try:\n            parsed = json.loads(value)\n        except json.JSONDecodeError:\n            return value\n        else:\n            return parsed\n\n    def _process_body(self, body: Any) -> dict:\n        \"\"\"Process the body input into a valid dictionary.\n\n        Args:\n            body: The body to process, can be dict, str, or list\n        Returns:\n            Processed dictionary\n        \"\"\"\n        if body is None:\n            return {}\n        if isinstance(body, dict):\n            return self._process_dict_body(body)\n        if isinstance(body, str):\n            return self._process_string_body(body)\n        if isinstance(body, list):\n            return self._process_list_body(body)\n\n        return {}\n\n    def _process_dict_body(self, body: dict) -> dict:\n        \"\"\"Process dictionary body by parsing JSON values.\"\"\"\n        return {k: self._parse_json_value(v) for k, v in body.items()}\n\n    def _process_string_body(self, body: str) -> dict:\n        \"\"\"Process string body by attempting JSON parse.\"\"\"\n        try:\n            return self._process_body(json.loads(body))\n        except json.JSONDecodeError:\n            return {\"data\": body}\n\n    def _process_list_body(self, body: list) -> dict:\n        \"\"\"Process list body by converting to key-value dictionary.\"\"\"\n        processed_dict = {}\n\n        try:\n            for item in body:\n                if not self._is_valid_key_value_item(item):\n                    continue\n\n                key = item[\"key\"]\n                value = self._parse_json_value(item[\"value\"])\n                processed_dict[key] = value\n\n        except (KeyError, TypeError, ValueError) as e:\n            self.log(f\"Failed to process body list: {e}\")\n            return {}  # Return empty dictionary instead of None\n\n        return processed_dict\n\n    def _is_valid_key_value_item(self, item: Any) -> bool:\n        \"\"\"Check if an item is a valid key-value dictionary.\"\"\"\n        return isinstance(item, dict) and \"key\" in item and \"value\" in item\n\n    def parse_curl(self, curl: str, build_config: dotdict) -> dotdict:\n        \"\"\"Parse a cURL command and update build configuration.\n\n        Args:\n            curl: The cURL command to parse\n            build_config: The build configuration to update\n        Returns:\n            Updated build configuration\n        \"\"\"\n        try:\n            parsed = parse_context(curl)\n\n            # Update basic configuration\n            build_config[\"urls\"][\"value\"] = [parsed.url]\n            build_config[\"method\"][\"value\"] = parsed.method.upper()\n            build_config[\"headers\"][\"advanced\"] = True\n            build_config[\"body\"][\"advanced\"] = True\n\n            # Process headers\n            headers_list = [{\"key\": k, \"value\": v} for k, v in parsed.headers.items()]\n            build_config[\"headers\"][\"value\"] = headers_list\n\n            if headers_list:\n                build_config[\"headers\"][\"advanced\"] = False\n\n            # Process body data\n            if not parsed.data:\n                build_config[\"body\"][\"value\"] = []\n            elif parsed.data:\n                try:\n                    json_data = json.loads(parsed.data)\n                    if isinstance(json_data, dict):\n                        body_list = [\n                            {\"key\": k, \"value\": json.dumps(v) if isinstance(v, dict | list) else str(v)}\n                            for k, v in json_data.items()\n                        ]\n                        build_config[\"body\"][\"value\"] = body_list\n                        build_config[\"body\"][\"advanced\"] = False\n                    else:\n                        build_config[\"body\"][\"value\"] = [{\"key\": \"data\", \"value\": json.dumps(json_data)}]\n                        build_config[\"body\"][\"advanced\"] = False\n                except json.JSONDecodeError:\n                    build_config[\"body\"][\"value\"] = [{\"key\": \"data\", \"value\": parsed.data}]\n                    build_config[\"body\"][\"advanced\"] = False\n\n        except Exception as exc:\n            msg = f\"Error parsing curl: {exc}\"\n            self.log(msg)\n            raise ValueError(msg) from exc\n\n        return build_config\n\n    def update_build_config(self, build_config: dotdict, field_value: Any, field_name: str | None = None) -> dotdict:\n        if field_name == \"use_curl\":\n            build_config = self._update_curl_mode(build_config, use_curl=field_value)\n\n            # Fields that should not be reset\n            preserve_fields = {\"timeout\", \"follow_redirects\", \"save_to_file\", \"include_httpx_metadata\", \"use_curl\"}\n\n            # Mapping between input types and their reset values\n            type_reset_mapping = {\n                TableInput: [],\n                BoolInput: False,\n                IntInput: 0,\n                FloatInput: 0.0,\n                MessageTextInput: \"\",\n                StrInput: \"\",\n                MultilineInput: \"\",\n                DropdownInput: \"GET\",\n                DataInput: {},\n            }\n\n            for input_field in self.inputs:\n                # Only reset if field is not in preserve list\n                if input_field.name not in preserve_fields:\n                    reset_value = type_reset_mapping.get(type(input_field), None)\n                    build_config[input_field.name][\"value\"] = reset_value\n                    self.log(f\"Reset field {input_field.name} to {reset_value}\")\n        elif field_name == \"method\" and not self.use_curl:\n            build_config = self._update_method_fields(build_config, field_value)\n        elif field_name == \"curl\" and self.use_curl and field_value:\n            build_config = self.parse_curl(field_value, build_config)\n        return build_config\n\n    def _update_curl_mode(self, build_config: dotdict, *, use_curl: bool) -> dotdict:\n        always_visible = [\"method\", \"use_curl\"]\n\n        for field in self.inputs:\n            field_name = field.name\n            field_config = build_config.get(field_name)\n            if isinstance(field_config, dict):\n                if field_name in always_visible:\n                    field_config[\"advanced\"] = False\n                elif field_name == \"urls\":\n                    field_config[\"advanced\"] = use_curl\n                elif field_name == \"curl\":\n                    field_config[\"advanced\"] = not use_curl\n                    field_config[\"real_time_refresh\"] = use_curl\n                elif field_name in [\"body\", \"headers\"]:\n                    field_config[\"advanced\"] = True  # Always keep body and headers in advanced when use_curl is False\n                else:\n                    field_config[\"advanced\"] = use_curl\n            else:\n                self.log(f\"Expected dict for build_config[{field_name}], got {type(field_config).__name__}\")\n\n        if not use_curl:\n            current_method = build_config.get(\"method\", {}).get(\"value\", \"GET\")\n            build_config = self._update_method_fields(build_config, current_method)\n\n        return build_config\n\n    def _update_method_fields(self, build_config: dotdict, method: str) -> dotdict:\n        common_fields = [\n            \"urls\",\n            \"method\",\n            \"use_curl\",\n        ]\n\n        always_advanced_fields = [\n            \"body\",\n            \"headers\",\n            \"timeout\",\n            \"follow_redirects\",\n            \"save_to_file\",\n            \"include_httpx_metadata\",\n        ]\n\n        body_fields = [\"body\"]\n\n        for field in self.inputs:\n            field_name = field.name\n            field_config = build_config.get(field_name)\n            if isinstance(field_config, dict):\n                if field_name in common_fields:\n                    field_config[\"advanced\"] = False\n                elif field_name in body_fields:\n                    field_config[\"advanced\"] = method not in [\"POST\", \"PUT\", \"PATCH\"]\n                elif field_name in always_advanced_fields:\n                    field_config[\"advanced\"] = True\n                else:\n                    field_config[\"advanced\"] = True\n            else:\n                self.log(f\"Expected dict for build_config[{field_name}], got {type(field_config).__name__}\")\n\n        return build_config\n\n    async def make_request(\n        self,\n        client: httpx.AsyncClient,\n        method: str,\n        url: str,\n        headers: dict | None = None,\n        body: Any = None,\n        timeout: int = 5,\n        *,\n        follow_redirects: bool = True,\n        save_to_file: bool = False,\n        include_httpx_metadata: bool = False,\n    ) -> Data:\n        method = method.upper()\n        if method not in {\"GET\", \"POST\", \"PATCH\", \"PUT\", \"DELETE\"}:\n            msg = f\"Unsupported method: {method}\"\n            raise ValueError(msg)\n\n        # Process body using the new helper method\n        processed_body = self._process_body(body)\n\n        try:\n            response = await client.request(\n                method,\n                url,\n                headers=headers,\n                json=processed_body,\n                timeout=timeout,\n                follow_redirects=follow_redirects,\n            )\n\n            redirection_history = [\n                {\n                    \"url\": redirect.headers.get(\"Location\", str(redirect.url)),\n                    \"status_code\": redirect.status_code,\n                }\n                for redirect in response.history\n            ]\n\n            is_binary, file_path = await self._response_info(response, with_file_path=save_to_file)\n            response_headers = self._headers_to_dict(response.headers)\n\n            metadata: dict[str, Any] = {\n                \"source\": url,\n            }\n\n            if save_to_file:\n                mode = \"wb\" if is_binary else \"w\"\n                encoding = response.encoding if mode == \"w\" else None\n                if file_path:\n                    # Ensure parent directory exists\n                    await aiofiles_os.makedirs(file_path.parent, exist_ok=True)\n                    if is_binary:\n                        async with aiofiles.open(file_path, \"wb\") as f:\n                            await f.write(response.content)\n                            await f.flush()\n                    else:\n                        async with aiofiles.open(file_path, \"w\", encoding=encoding) as f:\n                            await f.write(response.text)\n                            await f.flush()\n                    metadata[\"file_path\"] = str(file_path)\n\n                if include_httpx_metadata:\n                    metadata.update(\n                        {\n                            \"headers\": headers,\n                            \"status_code\": response.status_code,\n                            \"response_headers\": response_headers,\n                            **({\"redirection_history\": redirection_history} if redirection_history else {}),\n                        }\n                    )\n                return Data(data=metadata)\n\n            if is_binary:\n                result = response.content\n            else:\n                try:\n                    result = response.json()\n                except json.JSONDecodeError:\n                    self.log(\"Failed to decode JSON response\")\n                    result = response.text.encode(\"utf-8\")\n\n            metadata.update({\"result\": result})\n\n            if include_httpx_metadata:\n                metadata.update(\n                    {\n                        \"headers\": headers,\n                        \"status_code\": response.status_code,\n                        \"response_headers\": response_headers,\n                        **({\"redirection_history\": redirection_history} if redirection_history else {}),\n                    }\n                )\n            return Data(data=metadata)\n        except httpx.TimeoutException:\n            return Data(\n                data={\n                    \"source\": url,\n                    \"headers\": headers,\n                    \"status_code\": 408,\n                    \"error\": \"Request timed out\",\n                },\n            )\n        except Exception as exc:  # noqa: BLE001\n            self.log(f\"Error making request to {url}\")\n            return Data(\n                data={\n                    \"source\": url,\n                    \"headers\": headers,\n                    \"status_code\": 500,\n                    \"error\": str(exc),\n                    **({\"redirection_history\": redirection_history} if redirection_history else {}),\n                },\n            )\n\n    def add_query_params(self, url: str, params: dict) -> str:\n        url_parts = list(urlparse(url))\n        query = dict(parse_qsl(url_parts[4]))\n        query.update(params)\n        url_parts[4] = urlencode(query)\n        return urlunparse(url_parts)\n\n    async def make_requests(self) -> list[Data]:\n        method = self.method\n        urls = [url.strip() for url in self.urls if url.strip()]\n        headers = self.headers or {}\n        body = self.body or {}\n        timeout = self.timeout\n        follow_redirects = self.follow_redirects\n        save_to_file = self.save_to_file\n        include_httpx_metadata = self.include_httpx_metadata\n\n        if self.use_curl and self.curl:\n            self._build_config = self.parse_curl(self.curl, dotdict())\n\n        invalid_urls = [url for url in urls if not validators.url(url)]\n        if invalid_urls:\n            msg = f\"Invalid URLs provided: {invalid_urls}\"\n            raise ValueError(msg)\n\n        if isinstance(self.query_params, str):\n            query_params = dict(parse_qsl(self.query_params))\n        else:\n            query_params = self.query_params.data if self.query_params else {}\n\n        # Process headers here\n        headers = self._process_headers(headers)\n\n        # Process body\n        body = self._process_body(body)\n\n        bodies = [body] * len(urls)\n\n        urls = [self.add_query_params(url, query_params) for url in urls]\n\n        async with httpx.AsyncClient() as client:\n            results = await asyncio.gather(\n                *[\n                    self.make_request(\n                        client,\n                        method,\n                        u,\n                        headers,\n                        rec,\n                        timeout,\n                        follow_redirects=follow_redirects,\n                        save_to_file=save_to_file,\n                        include_httpx_metadata=include_httpx_metadata,\n                    )\n                    for u, rec in zip(urls, bodies, strict=False)\n                ]\n            )\n        self.status = results\n        return results\n\n    async def _response_info(\n        self, response: httpx.Response, *, with_file_path: bool = False\n    ) -> tuple[bool, Path | None]:\n        \"\"\"Determine the file path and whether the response content is binary.\n\n        Args:\n            response (Response): The HTTP response object.\n            with_file_path (bool): Whether to save the response content to a file.\n\n        Returns:\n            Tuple[bool, Path | None]:\n                A tuple containing a boolean indicating if the content is binary and the full file path (if applicable).\n        \"\"\"\n        content_type = response.headers.get(\"Content-Type\", \"\")\n        is_binary = \"application/octet-stream\" in content_type or \"application/binary\" in content_type\n\n        if not with_file_path:\n            return is_binary, None\n\n        component_temp_dir = Path(tempfile.gettempdir()) / self.__class__.__name__\n\n        # Create directory asynchronously\n        await aiofiles_os.makedirs(component_temp_dir, exist_ok=True)\n\n        filename = None\n        if \"Content-Disposition\" in response.headers:\n            content_disposition = response.headers[\"Content-Disposition\"]\n            filename_match = re.search(r'filename=\"(.+?)\"', content_disposition)\n            if filename_match:\n                extracted_filename = filename_match.group(1)\n                filename = extracted_filename\n\n        # Step 3: Infer file extension or use part of the request URL if no filename\n        if not filename:\n            # Extract the last segment of the URL path\n            url_path = urlparse(str(response.request.url) if response.request else \"\").path\n            base_name = Path(url_path).name  # Get the last segment of the path\n            if not base_name:  # If the path ends with a slash or is empty\n                base_name = \"response\"\n\n            # Infer file extension\n            content_type_to_extension = {\n                \"text/plain\": \".txt\",\n                \"application/json\": \".json\",\n                \"image/jpeg\": \".jpg\",\n                \"image/png\": \".png\",\n                \"application/octet-stream\": \".bin\",\n            }\n            extension = content_type_to_extension.get(content_type, \".bin\" if is_binary else \".txt\")\n            filename = f\"{base_name}{extension}\"\n\n        # Step 4: Define the full file path\n        file_path = component_temp_dir / filename\n\n        # Step 5: Check if file exists asynchronously and handle accordingly\n        try:\n            # Try to create the file exclusively (x mode) to check existence\n            async with aiofiles.open(file_path, \"x\") as _:\n                pass  # File created successfully, we can use this path\n        except FileExistsError:\n            # If file exists, append a timestamp to the filename\n            timestamp = datetime.now(timezone.utc).strftime(\"%Y%m%d%H%M%S%f\")\n            file_path = component_temp_dir / f\"{timestamp}-{filename}\"\n\n        return is_binary, file_path\n\n    def _headers_to_dict(self, headers: httpx.Headers) -> dict[str, str]:\n        \"\"\"Convert HTTP headers to a dictionary with lowercased keys.\"\"\"\n        return {k.lower(): v for k, v in headers.items()}\n\n    def _process_headers(self, headers: Any) -> dict:\n        \"\"\"Process the headers input into a valid dictionary.\n\n        Args:\n            headers: The headers to process, can be dict, str, or list\n        Returns:\n            Processed dictionary\n        \"\"\"\n        if headers is None:\n            return {}\n        if isinstance(headers, dict):\n            return headers\n        if isinstance(headers, list):\n            processed_headers = {}\n            try:\n                for item in headers:\n                    if not self._is_valid_key_value_item(item):\n                        continue\n                    key = item[\"key\"]\n                    value = item[\"value\"]\n                    processed_headers[key] = value\n            except (KeyError, TypeError, ValueError) as e:\n                self.log(f\"Failed to process headers list: {e}\")\n                return {}  # Return empty dictionary instead of None\n            return processed_headers\n        return {}\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "curl": {
+                "tool_mode": true,
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "curl",
+                "value": "",
+                "display_name": "cURL",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Paste a curl command to populate the fields. This will fill in the dictionary fields for headers and body.",
+                "real_time_refresh": false,
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              },
+              "follow_redirects": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "follow_redirects",
+                "value": true,
+                "display_name": "Follow Redirects",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Whether to follow http redirects.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "headers": {
+                "tool_mode": false,
+                "is_list": true,
+                "list_add_label": "Add More",
+                "table_schema": {
+                  "columns": [
+                    {
+                      "name": "key",
+                      "display_name": "Header",
+                      "sortable": true,
+                      "filterable": true,
+                      "formatter": "text",
+                      "type": "str",
+                      "description": "Header name",
+                      "default": "None",
+                      "disable_edit": false,
+                      "edit_mode": "popover",
+                      "hidden": false
+                    },
+                    {
+                      "name": "value",
+                      "display_name": "Value",
+                      "sortable": true,
+                      "filterable": true,
+                      "formatter": "text",
+                      "type": "str",
+                      "description": "Header value",
+                      "default": "None",
+                      "disable_edit": false,
+                      "edit_mode": "popover",
+                      "hidden": false
+                    }
+                  ]
+                },
+                "trigger_text": "Open table",
+                "trigger_icon": "Table",
+                "table_icon": "Table",
+                "trace_as_metadata": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "headers",
+                "value": [],
+                "display_name": "Headers",
+                "advanced": true,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": false,
+                "info": "The headers to send with the request as a dictionary.",
+                "title_case": false,
+                "type": "table",
+                "_input_type": "TableInput"
+              },
+              "include_httpx_metadata": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "include_httpx_metadata",
+                "value": false,
+                "display_name": "Include HTTPx Metadata",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Include properties such as headers, status_code, response_headers, and redirection_history in the output.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "method": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "GET",
+                  "POST",
+                  "PATCH",
+                  "PUT",
+                  "DELETE"
+                ],
+                "options_metadata": [],
+                "combobox": false,
+                "dialog_inputs": {},
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "method",
+                "value": "GET",
+                "display_name": "Method",
+                "advanced": false,
+                "dynamic": false,
+                "info": "The HTTP method to use.",
+                "real_time_refresh": true,
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "save_to_file": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "save_to_file",
+                "value": false,
+                "display_name": "Save to File",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Save the API response to a temporary file",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "timeout": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "timeout",
+                "value": 5,
+                "display_name": "Timeout",
+                "advanced": true,
+                "dynamic": false,
+                "info": "The timeout to use for the request.",
+                "title_case": false,
+                "type": "int",
+                "_input_type": "IntInput"
+              },
+              "urls": {
+                "tool_mode": true,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": true,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "urls",
+                "value": "",
+                "display_name": "URLs",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Enter one or more URLs, separated by commas.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "use_curl": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "use_curl",
+                "value": false,
+                "display_name": "Use cURL",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Enable cURL mode to populate fields from a cURL command.",
+                "real_time_refresh": true,
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              }
+            },
+            "description": "Make HTTP requests using URLs or cURL commands.",
+            "icon": "Globe",
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "API Request",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "data",
+                "hidden": null,
+                "display_name": "Data",
+                "method": "make_requests",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": null,
+                "allows_loop": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [
+              "urls",
+              "curl",
+              "method",
+              "use_curl",
+              "query_params",
+              "body",
+              "headers",
+              "timeout",
+              "follow_redirects",
+              "save_to_file",
+              "include_httpx_metadata"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "showNode": true,
+          "type": "APIRequest",
+          "id": "APIRequest-7yNM1"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 379
+        },
+        "dragging": false
+      },
+      {
+        "id": "Webhook-oCQwF",
+        "type": "genericNode",
+        "position": {
+          "x": -780.982739478238,
+          "y": 6.2879187194780854
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "import json\n\nfrom langflow.custom import Component\nfrom langflow.io import MultilineInput, Output\nfrom langflow.schema import Data\n\n\nclass WebhookComponent(Component):\n    display_name = \"Webhook\"\n    description = \"Defines a webhook input for the flow.\"\n    name = \"Webhook\"\n    icon = \"webhook\"\n\n    inputs = [\n        MultilineInput(\n            name=\"data\",\n            display_name=\"Payload\",\n            info=\"Receives a payload from external systems via HTTP POST.\",\n        )\n    ]\n    outputs = [\n        Output(display_name=\"Data\", name=\"output_data\", method=\"build_data\"),\n    ]\n\n    def build_data(self) -> Data:\n        message: str | Data = \"\"\n        if not self.data:\n            self.status = \"No data provided.\"\n            return Data(data={})\n        try:\n            body = json.loads(self.data or \"{}\")\n        except json.JSONDecodeError:\n            body = {\"payload\": self.data}\n            message = f\"Invalid JSON payload. Please check the format.\\n\\n{self.data}\"\n        data = Data(data=body)\n        if not message:\n            message = data\n        self.status = message\n        return data\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "data": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "data",
+                "value": "",
+                "display_name": "Payload",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Receives a payload from external systems via HTTP POST.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              }
+            },
+            "description": "Defines a webhook input for the flow.",
+            "icon": "webhook",
+            "base_classes": [
+              "Data"
+            ],
+            "display_name": "Webhook",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Data"
+                ],
+                "selected": "Data",
+                "name": "output_data",
+                "display_name": "Data",
+                "method": "build_data",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "allows_loop": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [
+              "data"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "showNode": true,
+          "type": "Webhook",
+          "id": "Webhook-oCQwF"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 227
+        },
+        "dragging": false
+      },
+      {
+        "id": "SaveToFile-dGlHz",
+        "type": "genericNode",
+        "position": {
+          "x": 538.8105601667407,
+          "y": 43.51623255295301
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "data": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "data",
+                "value": "",
+                "display_name": "Data",
+                "advanced": false,
+                "input_types": [
+                  "Data"
+                ],
+                "dynamic": true,
+                "info": "The Data object to save.",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "DataInput"
+              },
+              "df": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "list": false,
+                "list_add_label": "Add More",
+                "trace_as_input": true,
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "df",
+                "value": "",
+                "display_name": "DataFrame",
+                "advanced": false,
+                "input_types": [
+                  "DataFrame"
+                ],
+                "dynamic": true,
+                "info": "The DataFrame to save.",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "DataFrameInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "import json\nfrom collections.abc import AsyncIterator, Iterator\nfrom pathlib import Path\n\nimport pandas as pd\n\nfrom langflow.custom import Component\nfrom langflow.io import (\n    DataFrameInput,\n    DataInput,\n    DropdownInput,\n    MessageInput,\n    Output,\n    StrInput,\n)\nfrom langflow.schema import Data, DataFrame, Message\n\n\nclass SaveToFileComponent(Component):\n    display_name = \"Save to File\"\n    description = \"Save DataFrames, Data, or Messages to various file formats.\"\n    icon = \"save\"\n    name = \"SaveToFile\"\n\n    # File format options for different types\n    DATA_FORMAT_CHOICES = [\"csv\", \"excel\", \"json\", \"markdown\"]\n    MESSAGE_FORMAT_CHOICES = [\"txt\", \"json\", \"markdown\"]\n\n    inputs = [\n        DropdownInput(\n            name=\"input_type\",\n            display_name=\"Input Type\",\n            options=[\"DataFrame\", \"Data\", \"Message\"],\n            info=\"Select the type of input to save.\",\n            value=\"DataFrame\",\n            real_time_refresh=True,\n        ),\n        DataFrameInput(\n            name=\"df\",\n            display_name=\"DataFrame\",\n            info=\"The DataFrame to save.\",\n            dynamic=True,\n            show=True,\n        ),\n        DataInput(\n            name=\"data\",\n            display_name=\"Data\",\n            info=\"The Data object to save.\",\n            dynamic=True,\n            show=False,\n        ),\n        MessageInput(\n            name=\"message\",\n            display_name=\"Message\",\n            info=\"The Message to save.\",\n            dynamic=True,\n            show=False,\n        ),\n        DropdownInput(\n            name=\"file_format\",\n            display_name=\"File Format\",\n            options=DATA_FORMAT_CHOICES,\n            info=\"Select the file format to save the input.\",\n            real_time_refresh=True,\n        ),\n        StrInput(\n            name=\"file_path\",\n            display_name=\"File Path (including filename)\",\n            info=\"The full file path (including filename and extension).\",\n            value=\"./output\",\n        ),\n    ]\n\n    outputs = [\n        Output(\n            name=\"confirmation\",\n            display_name=\"Confirmation\",\n            method=\"save_to_file\",\n            info=\"Confirmation message after saving the file.\",\n        ),\n    ]\n\n    def update_build_config(self, build_config, field_value, field_name=None):\n        # Hide/show dynamic fields based on the selected input type\n        if field_name == \"input_type\":\n            build_config[\"df\"][\"show\"] = field_value == \"DataFrame\"\n            build_config[\"data\"][\"show\"] = field_value == \"Data\"\n            build_config[\"message\"][\"show\"] = field_value == \"Message\"\n\n            if field_value in [\"DataFrame\", \"Data\"]:\n                build_config[\"file_format\"][\"options\"] = self.DATA_FORMAT_CHOICES\n            elif field_value == \"Message\":\n                build_config[\"file_format\"][\"options\"] = self.MESSAGE_FORMAT_CHOICES\n\n        return build_config\n\n    def save_to_file(self) -> str:\n        input_type = self.input_type\n        file_format = self.file_format\n        file_path = Path(self.file_path).expanduser()\n\n        # Ensure the directory exists\n        if not file_path.parent.exists():\n            file_path.parent.mkdir(parents=True, exist_ok=True)\n\n        if input_type == \"DataFrame\":\n            dataframe = self.df\n            return self._save_dataframe(dataframe, file_path, file_format)\n        if input_type == \"Data\":\n            data = self.data\n            return self._save_data(data, file_path, file_format)\n        if input_type == \"Message\":\n            message = self.message\n            return self._save_message(message, file_path, file_format)\n\n        error_msg = f\"Unsupported input type: {input_type}\"\n        raise ValueError(error_msg)\n\n    def _save_dataframe(self, dataframe: DataFrame, path: Path, fmt: str) -> str:\n        if fmt == \"csv\":\n            dataframe.to_csv(path, index=False)\n        elif fmt == \"excel\":\n            dataframe.to_excel(path, index=False, engine=\"openpyxl\")\n        elif fmt == \"json\":\n            dataframe.to_json(path, orient=\"records\", indent=2)\n        elif fmt == \"markdown\":\n            path.write_text(dataframe.to_markdown(index=False), encoding=\"utf-8\")\n        else:\n            error_msg = f\"Unsupported DataFrame format: {fmt}\"\n            raise ValueError(error_msg)\n\n        return f\"DataFrame saved successfully as '{path}'\"\n\n    def _save_data(self, data: Data, path: Path, fmt: str) -> str:\n        if fmt == \"csv\":\n            pd.DataFrame(data.data).to_csv(path, index=False)\n        elif fmt == \"excel\":\n            pd.DataFrame(data.data).to_excel(path, index=False, engine=\"openpyxl\")\n        elif fmt == \"json\":\n            path.write_text(json.dumps(data.data, indent=2), encoding=\"utf-8\")\n        elif fmt == \"markdown\":\n            path.write_text(pd.DataFrame(data.data).to_markdown(index=False), encoding=\"utf-8\")\n        else:\n            error_msg = f\"Unsupported Data format: {fmt}\"\n            raise ValueError(error_msg)\n\n        return f\"Data saved successfully as '{path}'\"\n\n    def _save_message(self, message: Message, path: Path, fmt: str) -> str:\n        if message.text is None:\n            content = \"\"\n        elif isinstance(message.text, AsyncIterator):\n            # AsyncIterator needs to be handled differently\n            error_msg = \"AsyncIterator not supported\"\n            raise ValueError(error_msg)\n        elif isinstance(message.text, Iterator):\n            # Convert iterator to string\n            content = \" \".join(str(item) for item in message.text)\n        else:\n            content = str(message.text)\n\n        if fmt == \"txt\":\n            path.write_text(content, encoding=\"utf-8\")\n        elif fmt == \"json\":\n            path.write_text(json.dumps({\"message\": content}, indent=2), encoding=\"utf-8\")\n        elif fmt == \"markdown\":\n            path.write_text(f\"**Message:**\\n\\n{content}\", encoding=\"utf-8\")\n        else:\n            error_msg = f\"Unsupported Message format: {fmt}\"\n            raise ValueError(error_msg)\n\n        return f\"Message saved successfully as '{path}'\"\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "file_format": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "csv",
+                  "excel",
+                  "json",
+                  "markdown"
+                ],
+                "options_metadata": [],
+                "combobox": false,
+                "dialog_inputs": {},
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "file_format",
+                "value": "json",
+                "display_name": "File Format",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Select the file format to save the input.",
+                "real_time_refresh": true,
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "file_path": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "file_path",
+                "value": "./output",
+                "display_name": "File Path (including filename)",
+                "advanced": false,
+                "dynamic": false,
+                "info": "The full file path (including filename and extension).",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "input_type": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "DataFrame",
+                  "Data",
+                  "Message"
+                ],
+                "options_metadata": [],
+                "combobox": false,
+                "dialog_inputs": {},
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_type",
+                "value": "Data",
+                "display_name": "Input Type",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Select the type of input to save.",
+                "real_time_refresh": true,
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "message": {
+                "trace_as_input": true,
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "list_add_label": "Add More",
+                "required": false,
+                "placeholder": "",
+                "show": false,
+                "name": "message",
+                "value": "",
+                "display_name": "Message",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": true,
+                "info": "The Message to save.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageInput"
+              }
+            },
+            "description": "Save DataFrames, Data, or Messages to various file formats.",
+            "icon": "save",
+            "base_classes": [
+              "Text"
+            ],
+            "display_name": "Save to File",
+            "documentation": "",
+            "minimized": false,
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Text"
+                ],
+                "selected": "Text",
+                "name": "confirmation",
+                "hidden": null,
+                "display_name": "Confirmation",
+                "method": "save_to_file",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": null,
+                "allows_loop": false,
+                "tool_mode": true
+              }
+            ],
+            "field_order": [
+              "input_type",
+              "df",
+              "data",
+              "message",
+              "file_format",
+              "file_path"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "showNode": true,
+          "type": "SaveToFile",
+          "id": "SaveToFile-dGlHz"
+        },
+        "selected": false,
+        "measured": {
+          "width": 320,
+          "height": 455
+        },
+        "dragging": false
+      }
+    ],
+    "edges": [
+      {
+        "source": "CustomComponent-Vilnz",
+        "sourceHandle": "{œdataTypeœ:œCustomComponentœ,œidœ:œCustomComponent-Vilnzœ,œnameœ:œoutputœ,œoutput_typesœ:[œDataœ]}",
+        "target": "SaveToFile-dGlHz",
+        "targetHandle": "{œfieldNameœ:œdataœ,œidœ:œSaveToFile-dGlHzœ,œinputTypesœ:[œDataœ],œtypeœ:œotherœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "data",
+            "id": "SaveToFile-dGlHz",
+            "inputTypes": [
+              "Data"
+            ],
+            "type": "other"
+          },
+          "sourceHandle": {
+            "dataType": "CustomComponent",
+            "id": "CustomComponent-Vilnz",
+            "name": "output",
+            "output_types": [
+              "Data"
+            ]
+          }
+        },
+        "id": "xy-edge__CustomComponent-Vilnz{œdataTypeœ:œCustomComponentœ,œidœ:œCustomComponent-Vilnzœ,œnameœ:œoutputœ,œoutput_typesœ:[œDataœ]}-SaveToFile-dGlHz{œfieldNameœ:œdataœ,œidœ:œSaveToFile-dGlHzœ,œinputTypesœ:[œDataœ],œtypeœ:œotherœ}",
+        "animated": false,
+        "className": "",
+        "selected": false
+      }
+    ],
+    "viewport": {
+      "x": 471.7284079104034,
+      "y": 103.02892621162047,
+      "zoom": 0.5466320886648959
+    }
+  },
+  "updated_at": "2025-03-01T22:47:56+00:00",
+  "webhook": true
+}
