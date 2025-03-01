@@ -21,3 +21,6 @@ Share it back on slack to user via slackbot
 
 View →
 Final image in excalidraw
+
+setup
+`pip install slack_sdk requests openai unstructured cassandra-driver python-dotenv pillow`
