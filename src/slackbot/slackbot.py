@@ -40,10 +40,21 @@ def get_images_from_channel(channel_id):
                     for file in message['files']:
                         if file['mimetype'].startswith('image/'):
                             download_image(file['url_private'], file['name'])
-                            upload_file_to_r2(file['name'], object_key = f"uploads/{os.path.basename(file['name'])}")
+                            public_url = upload_file_to_r2(file['name'], object_key = f"uploads/{os.path.basename(file['name'])}")
+                            
+                            # Send the public_url to a webhook with API key
+                            webhook_url = "http://127.0.0.1:7860/api/v1/webhook/732f242c-af37-4cda-9911-4ed6a8e6a97b"  # Replace with your actual webhook URL
+                            payload = {"public_url": public_url}
+                            headers = {
+                                'Content-Type': 'application/json',
+                                'Authorization': f"Bearer {os.getenv('LANGFLOW_APPLICATION_TOKEN')}"  # Add API key in headers
+                            }
+                            print(requests.post(webhook_url, json=payload, headers=headers))
+                            
+                            return public_url
     except SlackApiError as e:
         print(f"Error fetching channel history: {e.response['error']}")
 
-# Example usage
-channel_id = "C08FKSBS4S1"
-get_images_from_channel(channel_id)
+if __name__ == "__main__":
+    channel_id = "C08FKSBS4S1"   #Hacking-Agents-Hackathon slack channel
+    get_images_from_channel(channel_id)
