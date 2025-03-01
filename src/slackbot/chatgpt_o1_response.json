@@ -1,0 +1,51 @@
+{
+  "id": "flow_excalidraw",
+  "name": "Excalidraw Conversion",
+  "description": "Auto-generated from Excalidraw",
+  "data": {
+    "nodes": [
+      {
+        "id": "node_chat_input",
+        "type": "PromptString",
+        "position": { "x": 176, "y": 191 },
+        "data": {
+          "name": "Chat Input"
+        }
+      },
+      {
+        "id": "node_llm",
+        "type": "ChatOpenAI",
+        "position": { "x": 534, "y": 193 },
+        "data": {
+          "name": "OpenAI Chat LLM",
+          "model_name": "gpt-3.5-turbo",
+          "temperature": 0.7
+        }
+      },
+      {
+        "id": "node_chat_output",
+        "type": "Return",
+        "position": { "x": 1005, "y": 192 },
+        "data": {
+          "name": "Chat Output"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_input_to_openai",
+        "source": "node_chat_input",
+        "target": "node_llm",
+        "sourceHandle": "output",
+        "targetHandle": "prompt"
+      },
+      {
+        "id": "edge_openai_to_output",
+        "source": "node_llm",
+        "target": "node_chat_output",
+        "sourceHandle": "output",
+        "targetHandle": "input"
+      }
+    ]
+  }
+}
