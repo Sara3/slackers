@@ -8,6 +8,7 @@ import requests
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
+from cloudflare_connector import upload_file_to_r2
 
 # Initialize a Web API client
 load_dotenv()
@@ -39,6 +40,7 @@ def get_images_from_channel(channel_id):
                     for file in message['files']:
                         if file['mimetype'].startswith('image/'):
                             download_image(file['url_private'], file['name'])
+                            upload_file_to_r2(file['name'], object_key = f"uploads/{os.path.basename(file['name'])}")
     except SlackApiError as e:
         print(f"Error fetching channel history: {e.response['error']}")
 
